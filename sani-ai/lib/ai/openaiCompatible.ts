@@ -1,3 +1,4 @@
+
 import { AppError } from '../errors';
 import { llmConfig } from '../env';
 import { answerSystemPrompt, VISION_HANDWRITING_PROMPT, VISION_QUESTION_PROMPT } from '../prompts/answerPrompt';
@@ -32,7 +33,12 @@ async function call(vision: boolean, messages: Msg[], opts: { json?: boolean; st
       }),
       signal: ctrl.signal,
     });
-    if (!res.ok) throw mapStatus(res.status);
+    if (!res.ok) {
+      let detail = '';
+      try { detail = (await res.text()).slice(0, 300); } catch { /* ignore */ }
+      const base = mapStatus(res.status);
+      throw new AppError(`${base.message} [Groq ${res.status} | model: ${cfg.model}] ${detail}`, base.status);
+    }
     return { res, done: () => clearTimeout(timer) };
   } catch (e) {
     clearTimeout(timer);
@@ -89,7 +95,7 @@ export class OpenAICompatibleProvider implements AIProvider {
     if (!res.body) { done(); throw new AppError('The AI returned an empty answer.', 502); }
     const reader = res.body.getReader();
     const dec = new TextDecoder();
-    let buf = '';
+    let bf = '';
     try {
       for (;;) {
         const { value, done: fin } = await reader.read();
