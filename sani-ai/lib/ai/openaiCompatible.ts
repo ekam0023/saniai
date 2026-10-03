@@ -1,4 +1,3 @@
-
 import { AppError } from '../errors';
 import { llmConfig } from '../env';
 import { answerSystemPrompt, VISION_HANDWRITING_PROMPT, VISION_QUESTION_PROMPT } from '../prompts/answerPrompt';
